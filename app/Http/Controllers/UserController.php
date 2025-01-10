@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Mail\OTPMail;
-// use App\Http\Controllers\JWTToken;
+use App\Helper\JWTToken;
 use App\Models\User;
 use Exception;
 use Illuminate\Http\Request;
