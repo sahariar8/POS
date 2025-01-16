@@ -7,6 +7,7 @@ use App\Helper\JWTToken;
 use App\Models\User;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 
 class UserController extends Controller
@@ -14,8 +15,8 @@ class UserController extends Controller
     function UserRegistration(Request $request){
 
         try {
-            $name=$request->input('name');
             $email=$request->input('email');
+            $name=$request->input('name');
             $mobile=$request->input('mobile');
             $password=$request->input('password');
             User::create([
@@ -39,28 +40,34 @@ class UserController extends Controller
 
     function UserLogin(Request $request){
 
-        $count=User::where('email','=',$request->input('email'))
-            ->where('password','=',$request->input('password'))
-            ->select('id')->first();
+        $user = User::where('email', $request->input('email'))->first();
 
+        if ($user && Hash::check($request->input('password'), $user->password)) {
+            // Password matches
+            $userId = $user->id;
 
-        if($count!==null){
-            // User Login-> JWT Token Issue
-            $token=JWTToken::CreateToken($request->input('email'),$count->id);
-            return response()->json([
-                'status' => 'success',
-                'message' => 'User Login Successful',
-                'token'=>$token
-            ],200)->cookie('token',$token,time()+60*24*30);
+            if($userId !== null)
+            {
+
+                $token=JWTToken::CreateToken($request->input('email'),$user->id);
+                return response()->json([
+                    'status' => 'success',
+                    'message' => 'User Login Successful',
+                    'token'=>$token
+                ],200)->cookie('token',$token,time()+60*60*24*30);
+            }
+            else
+            {
+                return response()->json([
+                    'status' => 'failed',
+                    'message' => 'unauthorized'
+                ],401);
+    
+            }
+        } else {
+       
+            return response()->json(['error' => 'Invalid credentials'], 401);
         }
-        else{
-            return response()->json([
-                'status' => 'failed',
-                'message' => 'unauthorized'
-            ],200);
-
-        }
-
 
     }
 
@@ -98,14 +105,14 @@ class UserController extends Controller
         $count=User::where('email','=',$email)
             ->where('otp','=',$otp)->count();
 
-        if($count==1){
+        if($count == 1){
             User::where('email','=',$email)->update(['otp'=>'0']);
             $token=JWTToken::CreateTokenForSetPassword($request->input('email'));
             return response()->json([
                 'status' => 'success',
                 'message' => 'OTP Verification Successful',
                 'token'=>$token
-            ],200)->cookie('token',$token,60*24*30);
+            ],200)->cookie('token',$token,60*60*30);
 
         }
         else{
@@ -128,10 +135,11 @@ class UserController extends Controller
                 'message' => 'Request Successful',
             ],200);
 
-        }catch (Exception $exception){
+        }catch (Exception $e){
             return response()->json([
                 'status' => 'fail',
                 'message' => 'Something Went Wrong',
+                'msg'=> $e->getMessage()
             ],200);
         }
 
