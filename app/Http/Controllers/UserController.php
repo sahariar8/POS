@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Mail;
 
 class UserController extends Controller
 {
-    function UserRegistration(Request $request){
+    public function UserRegistration(Request $request){
 
         try {
             $email=$request->input('email');
@@ -38,7 +38,7 @@ class UserController extends Controller
     }
 
 
-    function UserLogin(Request $request){
+    public function UserLogin(Request $request){
 
         $user = User::where('email', $request->input('email'))->first();
 
@@ -71,12 +71,7 @@ class UserController extends Controller
 
     }
 
-
-    function UserLogout(){
-        return redirect('/')->cookie('token','',-1);
-    }
-
-    function SendOTPCode(Request $request){
+    public function SendOTPCode(Request $request){
 
         $email=$request->input('email');
         $otp=rand(1000,9999);
@@ -99,7 +94,7 @@ class UserController extends Controller
     }
 
 
-    function VerifyOTP(Request $request){
+    public function VerifyOTP(Request $request){
         $email=$request->input('email');
         $otp=$request->input('otp');
         $count=User::where('email','=',$email)
@@ -124,11 +119,11 @@ class UserController extends Controller
     }
 
 
-    function ResetPassword(Request $request){
+    public function ResetPassword(Request $request){
 
         try{
             $email=$request->header('email');
-            $password=$request->input('password');
+            $password=hash::make($request->input('password'));
             User::where('email','=',$email)->update(['password'=>$password]);
             return response()->json([
                 'status' => 'success',
@@ -145,8 +140,11 @@ class UserController extends Controller
 
     }
 
+    public function UserLogout(){
+        return redirect('/')->cookie('token','',-1);
+    }
 
-    function UserProfile(Request $request){
+    public function UserProfile(Request $request){
         $email=$request->header('email');
         $user=User::where('email','=',$email)->first();
         return response()->json([
@@ -158,12 +156,12 @@ class UserController extends Controller
 
 
 
-    function UpdateProfile(Request $request){
+    public function UserProfileUpdate(Request $request){
         try{
             $email=$request->header('email');
             $name=$request->input('name');
             $mobile=$request->input('mobile');
-            $password=$request->input('password');
+            $password=hash::make($request->input('password'));
             User::where('email','=',$email)->update([
                 'name'=>$name,
                 'email'=>$email,
