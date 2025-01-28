@@ -13,6 +13,14 @@ return new class extends Migration
     {
         Schema::create('invoice_products', function (Blueprint $table) {
             $table->id();
+            $table->string('qty');
+            $table->string('sale_price');
+            $table->foreignId('invoice_id')->constrained('invoices')
+                    ->cascadeOnUpdate()->cascadeOnDelete();
+            $table->foreignId('product_id')->constrained('products')
+                    ->cascadeOnUpdate()->cascadeOnDelete();
+            $table->foreignId('user_id')->constrained('users')
+                    ->cascadeOnUpdate()->cascadeOnDelete();
             $table->timestamps();
         });
     }
